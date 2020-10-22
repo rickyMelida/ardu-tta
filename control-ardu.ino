@@ -17,8 +17,6 @@ EnergyMonitor energyMonitor;
 
 byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };   //Direccion Fisica MAC
 IPAddress ip(192, 168, 0, 177);                      // IP Local que usted debe configurar
-//byte gateway[] = { 192, 168, 0, 1 };                   // Puerta de enlace
-//byte subnet[] = { 255, 255, 255, 0 };                  //Mascara de Sub Red
 
 EthernetServer server(80);                             //Se usa el puerto 80 del servidor
 
@@ -46,7 +44,6 @@ void setup() {
 
   Ethernet.begin(mac, ip); // Inicializa la conexion Ethernet y el servidor
   server.begin();
-  //Variables para contar los tiempos de ande y generador
 
 }
 
@@ -60,17 +57,12 @@ void loop()
   double potencia =  Irms * voltajeRed;
 
   //Variables donde se almacenan los estados de energia
-  boolean estado_ande, estado_generador;
-
   //Leemos las señales de entrada de Ande Y Generador
-  estado_ande = digitalRead(S_ANDE);
-  estado_generador = digitalRead(S_GENERADOR);
-
-  //Serial.println(estado_ande);
+  boolean estado_ande = digitalRead(S_ANDE);
+  boolean estado_generador = digitalRead(S_GENERADOR);
 
   // Crea una conexion Cliente
   EthernetClient client = server.available();
-
 
 
   if (client) {
