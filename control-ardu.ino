@@ -35,7 +35,6 @@ void setup() {
   pinMode(S_ANDE, INPUT);
   pinMode(S_GENERADOR, INPUT);
 
-  Serial.begin(9600);
 
   // Iniciamos la clase indicando
   // Número de pin: donde tenemos conectado el SCT-013
@@ -79,26 +78,24 @@ void loop()
         client.println("Connection: close");
         client.println();
 
-        //Peticion para poder enviar el valor de la coorriente
-        if (peticion.indexOf("enviaDato") >= 0) {
-          client.print(Irms);
-        }
+        //Reseteo del combustible
+        reset(peticion, client);
+
+        //Peticion para poder enviar el valor de la corriente
+        recibirCorriente(peticion, client);
 
         // Si recibimos la señal de ande, le enviamos un verdadero a la aplicacion
-        if (peticion.indexOf("estadoande") >= 0) {
-          client.print(estado_ande);
-        }
+        statusAnde(peticion, client, estado_ande);
 
         //Enviamos la señal del generador a la aplicacion
-        if (peticion.indexOf("estadogenerador") >= 0) {
-          client.print(estado_generador);
-        }
-
+        statusGenerador(peticion, client, estado_generador);
 
         //Si tenemos señal de ande
         if (estado_ande) {
-           cont_generador = 0;
+          cont_generador = 0;
+
           if (cont_ande == 0) {
+
             //Desactivamos el contactor de generador
             digitalWrite(C_GENERADOR, LOW);
             delay(3000);
@@ -123,7 +120,6 @@ void loop()
             //Activamos el contactor de generador
             digitalWrite(C_GENERADOR, HIGH);
 
-
             //Desactivamos el stop del generador
             digitalWrite(STOP, LOW);
             cont_generador = cont_generador + 1;
@@ -131,13 +127,8 @@ void loop()
 
           //Si no arranca el generador el va seguir intentado
           if (!estado_generador) {
-
             //Peticion para poder encender el generador
-            if (peticion.indexOf("start") >= 0) {
-              int duracion = peticion.substring(peticion.indexOf("?") + 6, peticion.indexOf("?") + 10).toInt();
-              start(duracion);
-            }
-
+            start_G(peticion);
           }
 
         }
@@ -155,4 +146,44 @@ void start(int duracion) {
   digitalWrite(START, HIGH);
   delay(duracion);
   digitalWrite(START, LOW);
+}
+
+void start_G( String peticion) {
+  //Peticion para poder encender el generador
+  if (peticion.indexOf("start") >= 0) {
+    int duracion = peticion.substring(peticion.indexOf("?") + 6, peticion.indexOf("?") + 10).toInt();
+    start(duracion);
+  }
+}
+
+
+void statusAnde( String peticion, EthernetClient client,  boolean data) {
+  if (peticion.indexOf("estadoande") >= 0) {
+    client.print(data);
+  }
+}
+
+void statusGenerador( String peticion, EthernetClient client,  boolean data ) {
+  if (peticion.indexOf("estadogenerador") >= 0) {
+    client.print(data);
+  }
+}
+
+void recibirCorriente(String peticion, EthernetClient client) {
+  if (peticion.indexOf("enviaDato") >= 0) {
+    client.print(6.5);
+  }
+}
+
+void stopG( String peticion ) {
+  
+
+}
+
+void reset( String peticion, EthernetClient client ) {
+  if (peticion.indexOf("reset") >= 0) {
+    digitalWrite(RESET, HIGH);
+    delay(500);
+    digitalWrite(RESET, LOW);
+  }
 }
