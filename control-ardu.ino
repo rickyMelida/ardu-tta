@@ -16,7 +16,7 @@
 EnergyMonitor energyMonitor;
 
 byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };   //Direccion Fisica MAC
-IPAddress ip(192, 168, 0, 177);                      // IP Local que usted debe configurar
+IPAddress ip(192, 168, 100, 177);                      // IP Local que usted debe configurar
 
 EthernetServer server(80);                             //Se usa el puerto 80 del servidor
 
@@ -39,7 +39,7 @@ void setup() {
   // Iniciamos la clase indicando
   // Número de pin: donde tenemos conectado el SCT-013
   // Valor de calibración: valor obtenido de la calibración teórica
-  energyMonitor.current(0, 3.47);
+  energyMonitor.current(0, 2.63);
 
   Ethernet.begin(mac, ip); // Inicializa la conexion Ethernet y el servidor
   server.begin();
@@ -82,7 +82,7 @@ void loop()
         reset(peticion, client);
 
         //Peticion para poder enviar el valor de la corriente
-        recibirCorriente(peticion, client);
+        recibirCorriente(peticion, client, Irms);
 
         // Si recibimos la señal de ande, le enviamos un verdadero a la aplicacion
         statusAnde(peticion, client, estado_ande);
@@ -90,9 +90,11 @@ void loop()
         //Enviamos la señal del generador a la aplicacion
         statusGenerador(peticion, client, estado_generador);
 
+        /*--------------------------------- SI TENEMOS ANDE --------------------*/
         //Si tenemos señal de ande
         if (estado_ande) {
           cont_generador = 0;
+          digitalWrite(C_GENERADOR, LOW);
 
           if (cont_ande == 0) {
 
@@ -107,7 +109,7 @@ void loop()
             digitalWrite(STOP, HIGH);
             cont_ande = cont_ande + 1;
           }
-
+          /*--------------------------------- SI NO TENEMOS ANDE --------------------*/
         } else {
           cont_ande = 0;
 
@@ -130,7 +132,6 @@ void loop()
             //Peticion para poder encender el generador
             start_G(peticion);
           }
-
         }
         delay(50);
         client.stop();
@@ -169,14 +170,14 @@ void statusGenerador( String peticion, EthernetClient client,  boolean data ) {
   }
 }
 
-void recibirCorriente(String peticion, EthernetClient client) {
+void recibirCorriente(String peticion, EthernetClient client, double corriente) {
   if (peticion.indexOf("enviaDato") >= 0) {
-    client.print(6.5);
+    client.print(corriente);
   }
 }
 
 void stopG( String peticion ) {
-  
+
 
 }
 
