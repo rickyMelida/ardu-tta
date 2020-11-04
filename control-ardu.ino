@@ -16,7 +16,7 @@
 EnergyMonitor energyMonitor;
 
 byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };   //Direccion Fisica MAC
-IPAddress ip(192, 168, 100, 177);                      // IP Local que usted debe configurar
+IPAddress ip(192, 168, 0, 50);                      // IP Local que usted debe configurar
 
 EthernetServer server(80);                             //Se usa el puerto 80 del servidor
 
@@ -60,6 +60,46 @@ void loop()
   boolean estado_ande = digitalRead(S_ANDE);
   boolean estado_generador = digitalRead(S_GENERADOR);
 
+
+  /*--------------------------------- SI TENEMOS ANDE --------------------*/
+  //Si tenemos señal de ande
+  if (estado_ande) {
+    cont_generador = 0;
+    digitalWrite(C_GENERADOR, LOW);
+
+    if (cont_ande == 0) {
+
+      //Desactivamos el contactor de generador
+      digitalWrite(C_GENERADOR, LOW);
+      delay(3000);
+
+      //Activamos el contactor de la Ande
+      digitalWrite(C_ANDE, HIGH);
+
+      //Activamos el stop del generador
+      digitalWrite(STOP, HIGH);
+      cont_ande = cont_ande + 1;
+    }
+ /*--------------------------------- SI NO TENEMOS ANDE --------------------*/
+  } else {
+    cont_ande = 0;
+
+    if (cont_generador == 0) {
+      //Desactivamos el contactor de la Ande
+      digitalWrite(C_ANDE, LOW);
+
+      delay(3000);
+
+      //Activamos el contactor de generador
+      digitalWrite(C_GENERADOR, HIGH);
+
+      //Desactivamos el stop del generador
+      digitalWrite(STOP, LOW);
+      cont_generador = cont_generador + 1;
+    }
+
+  }
+
   // Crea una conexion Cliente
   EthernetClient client = server.available();
 
@@ -90,43 +130,8 @@ void loop()
         //Enviamos la señal del generador a la aplicacion
         statusGenerador(peticion, client, estado_generador);
 
-        /*--------------------------------- SI TENEMOS ANDE --------------------*/
-        //Si tenemos señal de ande
-        if (estado_ande) {
-          cont_generador = 0;
-          digitalWrite(C_GENERADOR, LOW);
-
-          if (cont_ande == 0) {
-
-            //Desactivamos el contactor de generador
-            digitalWrite(C_GENERADOR, LOW);
-            delay(3000);
-
-            //Activamos el contactor de la Ande
-            digitalWrite(C_ANDE, HIGH);
-
-            //Activamos el stop del generador
-            digitalWrite(STOP, HIGH);
-            cont_ande = cont_ande + 1;
-          }
-          /*--------------------------------- SI NO TENEMOS ANDE --------------------*/
-        } else {
-          cont_ande = 0;
-
-          if (cont_generador == 0) {
-            //Desactivamos el contactor de la Ande
-            digitalWrite(C_ANDE, LOW);
-
-            delay(3000);
-
-            //Activamos el contactor de generador
-            digitalWrite(C_GENERADOR, HIGH);
-
-            //Desactivamos el stop del generador
-            digitalWrite(STOP, LOW);
-            cont_generador = cont_generador + 1;
-          }
-
+        //Si no tenemos ande podemos dar arranque al generador
+        if (!estado_ande) {
           //Si no arranca el generador el va seguir intentado
           if (!estado_generador) {
             //Peticion para poder encender el generador
